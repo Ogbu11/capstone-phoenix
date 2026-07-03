@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root-application
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.com
+spec:
+  project: default
+  source:
+    # Points to your GitHub repository
+    repoURL: 'https://github.com/ts-a-devops/capstone-phoenix.git'
+    targetRevision: HEAD
+    # The directory Argo CD will scan for sub-applications
+    path: k8s/apps
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
