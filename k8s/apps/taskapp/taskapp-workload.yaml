@@ -27,6 +27,25 @@ spec:
         ports:
         - containerPort: 5432
           name: dbport
+        # Core Requirement: Health check probes for database status
+        livenessProbe:
+          exec:
+            command: ["pg_isready", "-U", "phoenix_user", "-d", "taskapp"]
+          initialDelaySeconds: 15
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command: ["pg_isready", "-U", "phoenix_user", "-d", "taskapp"]
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        # Core Requirement: Defined container limits and constraints
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "250m"
         volumeMounts:
         - name: db-data
           mountPath: /var/lib/postgresql/data
@@ -59,6 +78,12 @@ metadata:
   namespace: default
 spec:
   replicas: 2
+  # Core Requirement: Rolling update zero-downtime policy configurations
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
   selector:
     matchLabels:
       app: taskapp-backend
@@ -67,10 +92,21 @@ spec:
       labels:
         app: taskapp-backend
     spec:
+      # Core Requirement: Pod Anti-Affinity forces replicas to spread to separate nodes
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - taskapp-backend
+            topologyKey: "kubernetes.io/hostname"
       containers:
       - name: backend
-        # Using the specific verified image built during your training sessions
-        image: ogbu11/taskapp_backend_cicd:latest
+        # Fixed: Correct GHCR registry namespace + pinned sample tag (update with your actual commit/tag)
+        image: ghcr.io/ts-a-devops/taskapp-backend:v1.0.0 
         env:
         - name: DB_HOST
           value: "taskapp-db-service"
@@ -82,6 +118,26 @@ spec:
           value: "qY9emJoVHFB49ocH"
         ports:
         - containerPort: 5000
+        # Core Requirement: Health check tracking endpoints
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 5000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 5000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
 ---
 apiVersion: v1
 kind: Service
@@ -103,6 +159,11 @@ metadata:
   namespace: default
 spec:
   replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
   selector:
     matchLabels:
       app: taskapp-frontend
@@ -111,12 +172,41 @@ spec:
       labels:
         app: taskapp-frontend
     spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - taskapp-frontend
+            topologyKey: "kubernetes.io/hostname"
       containers:
       - name: frontend
-        # Using the specific verified image built during your training sessions
-        image: ogbu11/taskapp_frontend_cicd:latest
+        # Fixed: Correct GHCR registry namespace + pinned sample tag
+        image: ghcr.io/ts-a-devops/taskapp-frontend:v1.0.0
         ports:
         - containerPort: 80
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 3
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "25m"
+          limits:
+            memory: "64Mi"
+            cpu: "50m"
 ---
 apiVersion: v1
 kind: Service
