@@ -27,7 +27,6 @@ spec:
         ports:
         - containerPort: 5432
           name: dbport
-        # Core Requirement: Health check probes for database status
         livenessProbe:
           exec:
             command: ["pg_isready", "-U", "phoenix_user", "-d", "taskapp"]
@@ -38,7 +37,6 @@ spec:
             command: ["pg_isready", "-U", "phoenix_user", "-d", "taskapp"]
           initialDelaySeconds: 5
           periodSeconds: 5
-        # Core Requirement: Defined container limits and constraints
         resources:
           requests:
             memory: "128Mi"
@@ -78,7 +76,6 @@ metadata:
   namespace: default
 spec:
   replicas: 2
-  # Core Requirement: Rolling update zero-downtime policy configurations
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -92,7 +89,6 @@ spec:
       labels:
         app: taskapp-backend
     spec:
-      # Core Requirement: Pod Anti-Affinity forces replicas to spread to separate nodes
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -105,8 +101,7 @@ spec:
             topologyKey: "kubernetes.io/hostname"
       containers:
       - name: backend
-        # Fixed: Correct GHCR registry namespace + pinned sample tag (update with your actual commit/tag)
-        image: ghcr.io/ts-a-devops/taskapp-backend:main 
+        image: ghcr.io/ts-a-devops/taskapp-backend:main
         env:
         - name: DB_HOST
           value: "taskapp-db-service"
@@ -118,19 +113,18 @@ spec:
           value: "qY9emJoVHFB49ocH"
         ports:
         - containerPort: 5000
-        # Core Requirement: Health check tracking endpoints
         livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 5000
+          initialDelaySeconds: 15
+          periodSeconds: 15
+        readinessProbe:
           httpGet:
             path: /api/health
             port: 5000
           initialDelaySeconds: 10
           periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /api/health
-            port: 5000
-          initialDelaySeconds: 5
-          periodSeconds: 5
         resources:
           requests:
             memory: "64Mi"
@@ -184,7 +178,6 @@ spec:
             topologyKey: "kubernetes.io/hostname"
       containers:
       - name: frontend
-        # Fixed: Correct GHCR registry namespace + pinned sample tag
         image: ghcr.io/ts-a-devops/taskapp-frontend:main
         ports:
         - containerPort: 80
@@ -192,14 +185,14 @@ spec:
           httpGet:
             path: /
             port: 80
-          initialDelaySeconds: 5
-          periodSeconds: 10
+          initialDelaySeconds: 10
+          periodSeconds: 15
         readinessProbe:
           httpGet:
             path: /
             port: 80
-          initialDelaySeconds: 3
-          periodSeconds: 5
+          initialDelaySeconds: 5
+          periodSeconds: 10
         resources:
           requests:
             memory: "32Mi"
