@@ -1,36 +1,132 @@
 apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: taskapp-db
+  namespace: default
+spec:
+  serviceName: "taskapp-db-service"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: taskapp-db
+  template:
+    metadata:
+      labels:
+        app: taskapp-db
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15-alpine
+        env:
+        - name: POSTGRES_DB
+          value: taskapp
+        - name: POSTGRES_USER
+          value: phoenix_user
+        - name: POSTGRES_PASSWORD
+          value: qY9emJoVHFB49ocH
+        ports:
+        - containerPort: 5432
+          name: dbport
+        volumeMounts:
+        - name: db-data
+          mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+  - metadata:
+      name: db-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 2Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: taskapp-db-service
+  namespace: default
+spec:
+  selector:
+    app: taskapp-db
+  ports:
+  - port: 5432
+    targetPort: 5432
+  clusterIP: None
+---
+apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: taskapp-frontend
+  name: taskapp-backend
   namespace: default
-  labels:
-    app: taskapp
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: taskapp
+      app: taskapp-backend
   template:
     metadata:
       labels:
-        app: taskapp
+        app: taskapp-backend
     spec:
       containers:
-      - name: web
-        image: nginx:alpine
+      - name: backend
+        # Using the specific verified image built during your training sessions
+        image: ogbu11/taskapp_backend_cicd:latest
+        env:
+        - name: DB_HOST
+          value: "taskapp-db-service"
+        - name: DB_NAME
+          value: "taskapp"
+        - name: DB_USER
+          value: "phoenix_user"
+        - name: DB_PASSWORD
+          value: "qY9emJoVHFB49ocH"
+        ports:
+        - containerPort: 5000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: taskapp-backend-service
+  namespace: default
+spec:
+  selector:
+    app: taskapp-backend
+  ports:
+  - port: 5000
+    targetPort: 5000
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: taskapp-frontend
+  namespace: default
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: taskapp-frontend
+  template:
+    metadata:
+      labels:
+        app: taskapp-frontend
+    spec:
+      containers:
+      - name: frontend
+        # Using the specific verified image built during your training sessions
+        image: ogbu11/taskapp_frontend_cicd:latest
         ports:
         - containerPort: 80
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: taskapp-service
+  name: taskapp-frontend-service
   namespace: default
 spec:
   selector:
-    app: taskapp
+    app: taskapp-frontend
   ports:
-  - protocol: TCP
-    port: 80
+  - port: 80
     targetPort: 80
   type: ClusterIP
