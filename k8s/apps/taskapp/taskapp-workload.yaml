@@ -101,7 +101,7 @@ spec:
             topologyKey: "kubernetes.io/hostname"
       containers:
       - name: backend
-        image: ogbu11/taskapp_backend_cicd:v1.0.0
+        image: ghcr.io/ts-a-devops/taskapp-backend:v1.0.0
         env:
         - name: DB_HOST
           value: "taskapp-db-service"
@@ -178,7 +178,7 @@ spec:
             topologyKey: "kubernetes.io/hostname"
       containers:
       - name: frontend
-        image: ogbu11/taskapp_frontend_cicd:v1.0.0
+        image: ghcr.io/ts-a-devops/taskapp-frontend:v1.0.0
         ports:
         - containerPort: 80
         livenessProbe:
