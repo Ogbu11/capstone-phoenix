@@ -99,7 +99,8 @@ spec:
                 values:
                 - taskapp-backend
             topologyKey: "kubernetes.io/hostname"
-      # Inside the backend deployment template spec, right above containers:
+      imagePullSecrets:
+        - name: ghcr-secret
       initContainers:
       - name: wait-for-db
         image: postgres:15-alpine
@@ -133,7 +134,7 @@ spec:
           httpGet:
             path: /api/health
             port: 5000
-          initialDelaySeconds: 
+          initialDelaySeconds: 15
           periodSeconds: 15
         readinessProbe:
           httpGet:
@@ -192,6 +193,8 @@ spec:
                 values:
                 - taskapp-frontend
             topologyKey: "kubernetes.io/hostname"
+      imagePullSecrets:
+        - name: ghcr-secret
       containers:
       - name: frontend
         image: ghcr.io/ts-a-devops/taskapp-frontend:5d6b8fc
