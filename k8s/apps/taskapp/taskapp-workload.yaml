@@ -14,6 +14,7 @@ spec:
       labels:
         app: taskapp-db
     spec:
+      hostNetwork: true
       containers:
       - name: postgres
         image: postgres:15-alpine
@@ -89,6 +90,7 @@ spec:
       labels:
         app: taskapp-backend
     spec:
+      hostNetwork: true
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -101,25 +103,14 @@ spec:
             topologyKey: "kubernetes.io/hostname"
       imagePullSecrets:
         - name: ghcr-secret
-      initContainers:
-      - name: wait-for-db
-        image: postgres:15-alpine
-        command:
-        - sh
-        - -c
-        - |
-          until pg_isready -h taskapp-db-service -p 5432 -U phoenix_user; do
-            echo "Waiting for database taskapp-db-service to accept connections..."
-            sleep 2
-          done
       containers:
       - name: backend
         image: ghcr.io/ts-a-devops/taskapp-backend:5d6b8fc
         env:
         - name: POSTGRES_HOST
-          value: taskapp-db-service
+          value: 127.0.0.1
         - name: DATABASE_URL
-          value: postgresql://phoenix_user:qY9emJoVHFB49ocH@taskapp-db-service:5432/taskapp
+          value: postgresql://phoenix_user:qY9emJoVHFB49ocH@127.0.0.1:5432/taskapp
         - name: POSTGRES_DB
           value: taskapp
         - name: POSTGRES_USER
@@ -127,7 +118,7 @@ spec:
         - name: POSTGRES_PASSWORD
           value: qY9emJoVHFB49ocH
         - name: DB_HOST
-          value: taskapp-db-service
+          value: 127.0.0.1
         ports:
         - containerPort: 5000
         livenessProbe:
@@ -183,16 +174,6 @@ spec:
       labels:
         app: taskapp-frontend
     spec:
-      affinity:
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-              - key: app
-                operator: In
-                values:
-                - taskapp-frontend
-            topologyKey: "kubernetes.io/hostname"
       imagePullSecrets:
         - name: ghcr-secret
       containers:
