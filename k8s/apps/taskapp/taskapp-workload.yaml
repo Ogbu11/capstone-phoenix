@@ -101,7 +101,7 @@ spec:
             topologyKey: "kubernetes.io/hostname"
       containers:
       - name: backend
-        image: ghcr.io/ts-a-devops/taskapp-backend:5d6b8fc
+        image: ghcr.io/ts-a-devops/taskapp-backend:v1.0.0
         env:
         - name: DATABASE_URL
           value: postgresql://phoenix_user:qY9emJoVHFB49ocH@taskapp-db-service:5432/taskapp
