@@ -99,6 +99,18 @@ spec:
                 values:
                 - taskapp-backend
             topologyKey: "kubernetes.io/hostname"
+      # Inside the backend deployment template spec, right above containers:
+      initContainers:
+      - name: wait-for-db
+        image: postgres:15-alpine
+        command:
+        - sh
+        - -c
+        - |
+          until pg_isready -h taskapp-db-service -p 5432 -U phoenix_user; do
+            echo "Waiting for database taskapp-db-service to accept connections..."
+            sleep 2
+          done
       containers:
       - name: backend
         image: ghcr.io/ts-a-devops/taskapp-backend:5d6b8fc
@@ -121,7 +133,7 @@ spec:
           httpGet:
             path: /api/health
             port: 5000
-          initialDelaySeconds: 15
+          initialDelaySeconds: 
           periodSeconds: 15
         readinessProbe:
           httpGet:
