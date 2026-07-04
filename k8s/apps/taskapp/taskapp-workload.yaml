@@ -103,6 +103,8 @@ spec:
       - name: backend
         image: ghcr.io/ts-a-devops/taskapp-backend:latest
         env:
+        - name: POSTGRES_HOST
+          value: taskapp-db-service
         - name: DATABASE_URL
           value: postgresql://phoenix_user:qY9emJoVHFB49ocH@taskapp-db-service:5432/taskapp
         - name: POSTGRES_DB
