@@ -103,18 +103,14 @@ spec:
       - name: backend
         image: ghcr.io/ts-a-devops/taskapp-backend:5d6b8fc
         env:
+        - name: POSTGRES_DB
+          value: taskapp
+        - name: POSTGRES_USER
+          value: phoenix_user
+        - name: POSTGRES_PASSWORD
+          value: qY9emJoVHFB49ocH
         - name: DB_HOST
           value: taskapp-db-service
-        - name: DATABASE_HOST
-          value: taskapp-db-service
-        - name: POSTGRES_HOST
-          value: taskapp-db-service
-        - name: DB_NAME
-          value: taskapp
-        - name: DB_USER
-          value: phoenix_user
-        - name: DB_PASSWORD
-          value: qY9emJoVHFB49ocH
         ports:
         - containerPort: 5000
         livenessProbe:
