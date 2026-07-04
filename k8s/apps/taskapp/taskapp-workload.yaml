@@ -194,7 +194,7 @@ spec:
             topologyKey: "kubernetes.io/hostname"
       containers:
       - name: frontend
-        image: ghcr.io/ts-a-devops/taskapp-frontend:c2b906d
+        image: ghcr.io/0gbu11/taskapp-frontend:v1.0-custom
         ports:
         - containerPort: 80
         livenessProbe:
